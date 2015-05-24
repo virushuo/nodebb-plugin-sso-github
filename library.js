@@ -7,7 +7,8 @@
 		passport = module.parent.require('passport'),
 		passportGithub = require('passport-github').Strategy,
 		fs = module.parent.require('fs'),
-		path = module.parent.require('path');
+		path = module.parent.require('path'),
+		winston = module.parent.require('winston');
 
 	var constants = Object.freeze({
 		'name': "GitHub",
@@ -38,11 +39,10 @@
 				name: 'github',
 				url: '/auth/github',
 				callbackURL: '/auth/github/callback',
-				icon: 'github',
+				icon: 'fa-github',
 				scope: 'user:email'
 			});
 		}
-		
 		callback(null, strategies);
 	};
 
@@ -112,9 +112,18 @@
 		res.render('sso/github/admin', {});
 	}
 
-	GitHub.init = function(app, middleware, controllers) {
-		app.get('/admin/github', middleware.admin.buildHeader, renderAdmin);
-		app.get('/api/admin/github', renderAdmin);
+	GitHub.init = function(data, callback) {
+		data.router.get('/admin/github', data.middleware.admin.buildHeader, renderAdmin);
+		data.router.get('/api/admin/github', renderAdmin);
+
+			if (meta.config['social:github:id'] && meta.config['social:github:secret']) {
+				GitHub.id = meta.config['social:github:id'];
+				GitHub.secret = meta.config['social:github:secret'];
+			} else {
+				winston.warn('[plugins/sso-github] Please complete GitHub SSO setup at: /admin/plugins/sso-github');
+			}
+
+			callback();
 	};
 
 	module.exports = GitHub;
